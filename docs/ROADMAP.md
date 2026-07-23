@@ -1,70 +1,88 @@
 # Roadmap
 
-Build order is deliberate: the **loop and the fairness rails ship together**. Shipping the steal loop
-before shields/matchmaking/offline-caps exist would torch D7 retention (see Game Design §meta).
+Sequencing principle: the **core loop and its fairness rails ship together**, the **item-UID
+foundation is laid early** (so the flea can be built safely later), and the **highest-risk system (the
+flea market) ships last** behind a proven-stable economy.
 
 ## M0 — Foundations ✅ (in progress)
 
 - [x] Rokit toolchain, Rojo project files, Wally deps, StyLua/Selene/luau-lsp, CI
-- [x] Repository docs and conventions
+- [x] Design docs coherent with the locked vision
 - [ ] Service/controller loader (~80 lines, no framework)
-- [ ] `src/shared/defs` skeleton: `RarityDefs`, `ItemDefs` (typed), `BuildingDefs`
+- [ ] `src/shared/defs` skeleton: `RarityDefs`, `ItemDefs` (typed), `BuildingDefs` (tiers/HP/damage)
 - [ ] `src/shared/net` ByteNet packet definitions (initial surface)
-- [ ] `DataService` + ProfileStore template, load/save, migration harness
+- [ ] `DataService` + ProfileStore template; **item-UID instance model + single-location invariant**
+      + transaction/`txId` ledger (laid now, used everywhere later)
 
-## M1 — The loop (vertical slice, single player)
+## M1 — Core loop, single-server vertical slice
 
-- [ ] Roll at Altar → `RollService` with drop table + pity, server-authoritative
-- [ ] Inventory equip/unequip, drop-on-death
-- [ ] Vault store/withdraw + income accrual (online)
-- [ ] Base placement on snap-grid with placeable cap and presets (<60s to functional)
-- [ ] Vide UI for roll / inventory / vault / build
-- [ ] Juice pass #1: roll animation, steal SFX, screen shake, particles
+- [ ] `RollService`: rolls, drop tables, pity, published rates
+- [ ] `InventoryService`: equip/unequip, **drop-on-death** ground loot, deliberate Delete-drop
+- [ ] `BaseService`: buy parts, **grid-snap placement**, part cap, serialize/rebuild base, **support
+      graph**
+- [ ] `VaultService`: store/withdraw, income accrual (online)
+- [ ] Vide UI: roll, inventory, vault, part shop, build mode
+- [ ] Juice pass #1: destruction bursts, roll animation, hit feedback, sound
 
-## M2 — Raiding + fairness (the two halves must land together)
+## M2 — Raiding + fairness (must land together)
 
-- [ ] Base snapshot serialization + MemoryStore/DataStore store, banded by net worth
-- [ ] `MatchmakingService` serves snapshots; `RaidService` instantiates + simulates defenses
-- [ ] Server-authoritative steal channel (position/LoS/timing validation each tick)
-- [ ] Idempotent steal transaction (txId, pendingEvents drain on load)
-- [ ] **Fairness rails, same milestone:** new-player shield window, daily/purchasable shields,
-      offline-loss cap, gap-scaled raid rewards, diminishing vault returns
-- [ ] Offline income cap applied on load
+- [ ] `RaidService`: raid-tool typed damage vs. tier, breach, **server-timed vault extraction**,
+      position/LoS validation each tick
+- [ ] Full-destruction tuning: tool-vs-tier tables, support-collapse chains, batched replication
+- [ ] `CombatService`: PvP damage, abilities, death → full drop
+- [ ] `RatingService`: hidden MMR + net worth; friendly level
+- [ ] `MatchmakingService`: MemoryStore queue + reserved servers, **MMR banding**
+- [ ] **Fairness rails, same milestone:** hub safezone, new-player protection window, shields
+      (un-matchmadable), gap-scaled raid rewards, diminishing vault returns
+- [ ] Offline income cap on load; base safe offline
 
 ## M3 — Retention systems
 
 - [ ] Daily login streak → day-7 guaranteed high-rarity roll
-- [ ] Weekly "value stolen" leaderboard (MemoryStore sorted map, Monday reset)
-- [ ] Mythic of the Week rotation
-- [ ] Tutorial: scripted <90s first-session loop (roll → equip → defend NPC → raid bot → steal)
-- [ ] Notifications (robbed-while-away, shield expiring)
+- [ ] Weekly leaderboards (value raided / traded) — MemoryStore, Monday reset
+- [ ] Rotating limited items (FOMO)
+- [ ] Tutorial: scripted <90s first session (roll → equip → build → defend → breach bot → loot)
+- [ ] Notifications (under-attack, shield expiring); defensive **bot bases** as population backstop
 
 ## M4 — Monetization
 
-- [ ] EconomyService: receipt validation (idempotent), gem packs
-- [ ] Gamepasses: luck multiplier, auto-roll, extra vault slots, faster channel
-- [ ] Shields as consumables; VIP/season pass
-- [ ] Cosmetics (neon skins, vault themes, trails)
+- [ ] `EconomyService`: receipt validation (idempotent), gem packs
+- [ ] Gamepasses: luck, auto-roll, extra vault slots, income boost, plot/cap (fairness-capped)
+- [ ] Shields (consumable), VIP/season pass, cosmetics/skins
 - [ ] Published drop rates in UI matching server tables
+- [ ] **Content-maturity questionnaire → Mild 9+ rating** before public launch
 
-## M5 — Scale hardening (toward 20K CCU)
+## M5 — Flea market (highest risk, ships last)
+
+- [ ] Read-only market data + price charts over seeded liquidity
+- [ ] Sell orders + buy-now (escrow-on-list, atomic settlement, `txId`)
+- [ ] Buy orders + auto-matching + full charts
+- [ ] Anti-manipulation: velocity limits, taxes (sink), wash-trade detection, full ledger + telemetry
+
+## M6 — Scale hardening (toward 10K+ CCU)
 
 - [ ] Parallel Luau (Actors) for turret targeting + raid pathfinding
-- [ ] StreamingEnabled tuning; per-base streaming of instantiated snapshots
-- [ ] ByteNet delta replication audit; bandwidth budget per 16-player shard
-- [ ] Rate limiting on every intent packet; anomaly telemetry
-- [ ] Load/soak testing; DataStore/MemoryStore budget verification
-- [ ] `run-in-roblox` integration tests in CI (Open Cloud) — see below
+- [ ] StreamingEnabled tuning; per-base streaming of live bases
+- [ ] ByteNet delta audit; bandwidth budget per 16-player shard
+- [ ] Rate limiting on every intent; anomaly telemetry dashboards
+- [ ] Load/soak testing; MemoryStore/DataStore (per-experience) budget verification
+- [ ] `run-in-roblox` integration tests in CI (Open Cloud)
 
-## Testing maturity (deferred item)
+## Testing maturity (deferred)
 
-Jest covers pure logic in `src/shared` now. Full in-engine integration tests need `run-in-roblox`
-driven by an Open Cloud key in CI; that's an M5 item because it requires a place + secret management,
-not just code. Until then, keep game math pure and unit-tested off-engine.
+Jest covers pure logic now (drop tables, income, damage-vs-tier, support graph, order matching). Full
+in-engine integration tests need `run-in-roblox` + an Open Cloud key in CI — an M6 item (needs a place
++ secret management). Keep game math pure and unit-tested off-engine until then.
 
 ## Explicitly deferred / not doing (yet)
 
-- Trading between players (dupe/scam surface; revisit after economy is stable)
-- Guilds/alliances (raid-coordination complexity; strong retention lever for later)
-- Mobile-specific control scheme polish (validate the loop on PC first, but keep UI touch-friendly)
-- Any DI framework (Knit/Flamework) — explicitly rejected for scale reasons
+- Guilds/alliances (raid-coordination complexity; strong later retention lever)
+- Cross-server live raiding / snapshots (rejected — raids are online-only same-server by design)
+- Any DI framework (Knit/Flamework) — rejected for scale reasons
+- Real-money-adjacent trading features beyond the in-game flea
+
+## Art dependencies
+
+Several milestones gate on commissioned assets — see `docs/ASSET_PIPELINE.md`. The modular building
+kit (M1) and hero weapons/raid tools (M2) are the two paid critical-path items; everything else is
+code/VFX/UI/default-avatar and unblocked.

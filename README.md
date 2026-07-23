@@ -2,9 +2,11 @@
 
 A high-retention, PvP base-building and loot-stealing game for Roblox, built for **20K+ CCU**.
 
-You roll for loot at your base. Loot is **dual-purpose** — carry it to fight, or lock it in your
-vault for passive income. Other players raid your base and steal from your vault. Every item is a
-live risk/reward decision, and there is no idle state. That tension is the whole game.
+**Buy** the parts to build a fully destructible base. **Roll** for the gear, abilities, and raid
+tools you carry. Grow passive income from your vaults, raid the players sharing your server in real
+time (breach their walls, loot their vaults), and trade everything on a global player-run market.
+Your base is safe when you log off — but everything you carry drops the moment you die. That risk is
+the whole game.
 
 > **Status:** Pre-alpha. Toolchain, project structure, and design docs are in place; gameplay
 > systems are being implemented. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
@@ -47,10 +49,10 @@ retention — not a tech demo.
 ├── docs/                    # Architecture + design specs (read these first)
 └── src/
     ├── client/              # StarterPlayerScripts — renders replicated state, never authoritative
-    │   ├── ui/              # Vide components
-    │   └── controllers/     # Input, camera, client-side prediction
+    │   ├── ui/              # Vide components (inventory, vault, shop, flea, charts)
+    │   └── controllers/     # Net, Input, Build (grid snap), Camera, UI, Effects
     ├── server/              # ServerScriptService — single source of truth
-    │   ├── services/        # Roll, Vault, Raid, Economy, Base, Matchmaking
+    │   ├── services/        # Data, Roll, Inventory, Vault, Base, Raid, Combat, Rating, Matchmaking, Economy, Flea
     │   └── data/            # ProfileStore templates + access
     ├── shared/              # ReplicatedStorage — pure, deterministic, no side effects
     │   ├── defs/            # ItemDefs, RarityDefs, BuildingDefs (one-file-diff to add content)
@@ -93,13 +95,17 @@ just --list       # everything
 
 Read in this order:
 
-1. [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md) — the loop, retention, and monetization
-2. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — services, scaling, streaming, actors
-3. [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — profile schema and the atomic steal transaction
-4. [`docs/NETWORKING.md`](docs/NETWORKING.md) — ByteNet packets and replication strategy
-5. [`docs/ANTI_EXPLOIT.md`](docs/ANTI_EXPLOIT.md) — server authority rules
-6. [`docs/ECONOMY_AND_MONETIZATION.md`](docs/ECONOMY_AND_MONETIZATION.md) — sinks, faucets, products
-7. [`docs/ROADMAP.md`](docs/ROADMAP.md) — build order and milestones
+1. [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md) — the loop, retention, monetization, and open risks
+2. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — live same-server bases, services, scaling
+3. [`docs/BUILDING_AND_RAIDING.md`](docs/BUILDING_AND_RAIDING.md) — full destruction (HP + support graph, no physics)
+4. [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — profile schema, item-UID invariant, transactions
+5. [`docs/MATCHMAKING.md`](docs/MATCHMAKING.md) — hidden MMR + reserved-server banding
+6. [`docs/FLEA_MARKET.md`](docs/FLEA_MARKET.md) — order-book exchange + anti-fraud
+7. [`docs/NETWORKING.md`](docs/NETWORKING.md) — ByteNet packets and replication
+8. [`docs/ANTI_EXPLOIT.md`](docs/ANTI_EXPLOIT.md) — server authority rules
+9. [`docs/ECONOMY_AND_MONETIZATION.md`](docs/ECONOMY_AND_MONETIZATION.md) — sinks, faucets, products
+10. [`docs/ASSET_PIPELINE.md`](docs/ASSET_PIPELINE.md) — sourcing art without in-house modeling
+11. [`docs/ROADMAP.md`](docs/ROADMAP.md) — build order and milestones
 
 ## License
 

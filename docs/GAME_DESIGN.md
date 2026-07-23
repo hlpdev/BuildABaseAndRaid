@@ -1,123 +1,147 @@
 # Game Design
 
-## The one-sentence pitch
+## The pitch
 
-Roll for dual-purpose loot, then decide every item's fate: **carry it and get strong but droppable,
-or vault it for income but stealable.** Raid others, defend yourself, reinvest.
+**Buy** the parts to build a destructible base. **Roll** for the gear, abilities, and raid tools you
+carry. Grow passive income from your vaults, raid the players sharing your server in real time, and
+trade everything on a global player-run market. Your base is safe when you log off — but everything
+you carry can be lost the moment you die.
 
-## Core loop (30–60s cycle)
+## Two economies, cleanly separated
 
-1. **Roll** at your base's Altar. Free roll on a cooldown (starts ~30s, shrinks with upgrades).
-2. **Equip or Store.** Every item is dual-purpose:
-   - *Carried* → combat value, but **dropped on death**.
-   - *Vaulted* → generates income (coins/sec), but **stealable** by raiders.
-3. **Raid** another base; channel-steal from their vault.
-4. **Reinvest** income into defenses, vault capacity, and roll quality.
+- **Building parts are purchased** with coins (the primary coin *sink*).
+- **Loot is rolled** — a gacha of weapons, abilities, raid tools, boosts, and building props (the
+  primary dopamine *faucet*).
 
-The tension between carry and vault is the entire retention engine. There is no idle state — every
-item is a live micro-decision.
+Keeping "the thing you grind for" (rolls) separate from "the thing you spend on" (parts) makes both
+loops legible and independently tunable.
+
+## Core loops
+
+**Seconds → minutes (moment-to-moment):** roll at your altar, fight or farm, drop-in on a neighbor's
+base, breach a wall, grab loot, run it home.
+
+**A session (minutes → an hour):** convert income + raid spoils into more parts → a stronger base →
+safer vaults → higher income; flip items on the flea market; climb toward better matchmade lobbies.
+
+**Days → weeks (meta):** capped offline income pulls you back; daily/streak rewards; rotating
+limited items; weekly leaderboards; a living market you check like a stock ticker.
+
+## The base
+
+Built from **purchased modular parts** on a per-player plot: foundations, walls, floors, ramps,
+**doors**, **hatches** (vertical doors), **ladders**, and **vaults** — each in tiers
+(wood → stone → metal) and variants. Bases:
+
+- **Persist on your profile**, not on the server.
+- **Instantiate into the server when you're online**, and are **only raidable while you're online**.
+- Are **completely safe while you're offline.** This deliberately deletes the genre's #1 churn source
+  — nobody ever logs in to an emptied vault.
+
+Full **destruction** is real: walls, doors, and hatches have HP and material tiers; raid tools deal
+typed damage; parts are removed at 0 HP; a cheap server-side **support graph** decides what stays
+standing. No live physics. See `docs/BUILDING_AND_RAIDING.md`.
 
 ## Loot
 
-Rarity tiers with **visible drop rates** (Common → Uncommon → Rare → Epic → Legendary → Mythic).
-Each item carries three numbers and one behavior:
+Rolled from rarity tiers with **published drop rates** (Common → Mythic). Categories:
 
-- **Combat value** (if carried)
-- **Vault income** — coins/sec (if stored)
-- **Steal difficulty** — channel seconds to extract (scales with rarity)
-- **Ability** — functional, code-only (e.g. *Chain Lightning*, *Phase Dash*), never a bare stat buff
+- **Weapons** — PvP.
+- **Abilities** — code-only, functional (e.g. *Phase Dash*, *Chain Lightning*), never bare stat buffs.
+- **Raid tools** — the only way to breach (charges, cutters, drills); typed vs. material tiers.
+- **Boosts** — income, luck, speed, defense.
+- **Building props / cosmetics** — vanity and flavor.
 
-Making Mythics *do things* is what separates this from the dead "+50% damage" loot that kills most
-"Build A" games. All abilities are code; zero modeling required.
+Every item is a **server-minted global UID instance** from birth — because it may later be vaulted,
+dropped on the ground, or listed on the flea market, and the server must track it everywhere.
 
-## Base building (no modeling)
+## Carry, death, and dropping
 
-Grid-based plots built from a fixed primitive kit + free Creator Store assets:
+- **Carried items drop on death** (full-loot) as ground loot anyone can pick up.
+- **Currency does NOT drop on death** — losing rolled gear stings enough; losing coins too would be
+  brutal and rage-inducing for the target age.
+- Players can **deliberately drop** currency (piles) and items (Delete key) onto the ground. This is
+  the *only* face-to-face "trading" — trust-based, risky, no trade GUI. Real trading is the flea.
+- **Vaulted items are safe** unless a raider breaches your base and reaches the vault.
 
-- **Walls** — block line-of-sight, have HP
-- **Turrets** — auto-fire at raiders
-- **Traps** — slow / damage / alarm
-- **Vault** — upgradeable capacity and steal-time multiplier
+## Raiding
 
-Hard rule: a new player reaches a **functional layout in under 60 seconds** via snap-grid presets,
-then customizes. Tedious building is the second thing that kills this genre.
+Same-server, real-time, **only vs. online players**:
 
-## Stealing (the signature mechanic)
+1. Find a target base in your server (matchmade lobby, so targets are near your level).
+2. **Breach** — spend raid tools to destroy doors/hatches/weak points and tunnel toward the vault.
+3. **Loot the vault**, carry it out, survive the trip home. Die and it drops.
 
-- Raider stands at the vault and **holds to channel** for N seconds (scales with item rarity).
-- Channel **breaks on damage** → defenses matter, and solo-vs-duo raiding is a real strategic axis.
-- Raider can carry out only a **limited number** of stolen items; must reach the **exit zone** to
-  bank the theft. Dying en route drops the loot.
-- Owner gets notified (and, if offline, a rejoin prompt).
+Server-authoritative end to end (`docs/ANTI_EXPLOIT.md`). Defense = base layout + traps/turrets +
+being present to fight back.
 
-Server-authoritative end to end. See `docs/ANTI_EXPLOIT.md` and `docs/DATA_MODEL.md`.
+## Fairness: MMR-banded matchmaking + protection
+
+Full-loot PvP for a 9+ audience only works if minnows don't get fed to sharks.
+
+- A **hidden MMR** (skill × net worth) rates every player. Players see a friendly *level*, never the
+  raw rating, so it can't be gamed or demoralize.
+- The matchmaker bands players by MMR into **reserved servers** via `TeleportService` +
+  MemoryStore queue. See `docs/MATCHMAKING.md`.
+- **Hub/spawn is a safezone.** New players get a **protection window**. Both are backstops; MMR
+  banding is the primary fairness mechanism.
+
+## Global flea market
+
+An async, player-run **order-book exchange** (Steam-market / Tarkov flea in spirit): global listings,
+player-set prices, **buy orders and sell orders** that auto-match, and **price history charts**.
+Items move into **server-side escrow** the instant they're listed — the item leaves your inventory
+immediately, closing the list-then-dupe window. See `docs/FLEA_MARKET.md`. Built late; the item model
+supports it from day one.
+
+## Passive income
+
+Accrues from **vault tier × stored item value × boosts/gamepasses**, with **diminishing returns past
+a soft cap** (anti-hoarding) and a **~few-hour offline cap** (return incentive without idling being
+optimal). Never computed client-side.
 
 ## Retention structure
 
-**D1 — the tutorial is the loop itself.** Forced first roll → auto-equip → scripted raider NPC hits
-your base → you defend → you raid a bot base and steal. Under 90 seconds, no text walls.
+- **D1:** the tutorial *is* the loop — roll → equip → build a starter wall → defend against a scripted
+  raider → breach a bot base → loot it. Under ~90s, no text walls.
+- **D7:** daily login streak → guaranteed high-rarity roll; capped offline income; weekly "value
+  raided/traded" leaderboards; rotating limited items (FOMO return); a market worth checking daily.
+- **Protection window** for new accounts so the first bad beat doesn't end the relationship.
 
-**D7:**
-- Escalating daily login rewards, culminating in a guaranteed high-rarity roll on day 7.
-- Offline vault income, capped (~4h) so returning feels rewarding but doesn't remove the reason to
-  play actively.
-- Weekly leaderboard for total value stolen; resets Monday.
-- Rotating **"Mythic of the Week"**, rollable for 7 days only → FOMO return.
+## Content rating target: Mild (9+)
 
-**New-player protection (the #1 D7 killer if wrong):**
-- First ~20 minutes = raid-immunity shield.
-- Everyone gets a daily shield item; shields are also purchasable.
-- A player who logs in to an emptied vault churns. Protecting the vulnerable window is not optional.
+To be eligible for Roblox Select (9–15) we hold a **Mild 9+** rating: cartoon/unrealistic combat, no
+realistic gore or weapons, safe-chat only. Complete the content-maturity questionnaire before public
+launch. This is a hard design constraint on art and combat feel, not an afterthought.
 
 ---
 
-## Critical review — where I'm pushing back
+## Critical review — live risks in *this* design
 
-The developer asked to be challenged. These are the design risks I rate highest, with recommended
-mitigations. Treat this section as live; revisit as playtest data arrives.
+The developer asked to be challenged. The four choices locked this turn each carry a cost:
 
-### 1. Offline raiding is an asymmetric-fun trap
-Getting robbed while offline feels *bad* in a way that robbing feels *good* — the ledger isn't
-symmetric. If vaults are freely raidable while owners sleep, churn spikes among exactly the players
-you retained yesterday.
-**Recommendation:** Offline vaults leak only a **capped fraction** of stored value per raid, and
-offline income keeps accruing. The fantasy is "someone chipped my hoard," not "I logged in to zero."
-Consider: only *online* players are fully raidable; offline bases are matchmade at a reduced reward
-multiplier. Instrument churn-after-first-robbery from day one.
+### 1. Full destruction is the scope/perf boss fight
+Chosen deliberately, but it *is* the hardest system in the game. Mitigations are structural, not
+optional: deterministic HP (no physics), hard per-base part cap, aggressive streaming of other bases,
+and typed damage so raids are tuned by tool-vs-tier math, not physics. If perf work slips, this is
+what breaks first at 10K CCU. See `docs/BUILDING_AND_RAIDING.md`.
 
-### 2. "Free roll every 30s" fights your own monetization
-A generous free faucet trains players to wait, not to pay. But throttling it too hard kills the loop.
-**Recommendation:** Keep the free roll frequent (loop health) but make the **paid axis be quality and
-convenience, not raw rolls** — luck multipliers, auto-roll while away, extra vault slots, faster
-steal channels. Sell *edge and time*, not the core verb. See `docs/ECONOMY_AND_MONETIZATION.md`.
+### 2. Full-loot + young audience still needs constant fairness attention
+MMR banding is the right primary fix (better than a shield alone), but MMR is only as good as its
+inputs and cold-start. Instrument *robbed-then-churned* by MMR band from day one; if a band churns,
+the matchmaker is miscalibrated, not the players.
 
-### 3. Rich-get-richer runaway
-Winners get better loot → better defenses → safer vaults → more income → even better loot. Left
-alone, the top 1% become un-raidable and new players see no path up. This is the long-term retention
-killer, past D7.
-**Recommendation:** Raid rewards **scale with the gap** (raiding up is lucrative, raiding down isn't),
-vault income has **diminishing returns** past a soft cap, and matchmaking bands players by net worth.
-Bigger hoards should mean bigger targets, not safer ones.
+### 3. Turtling and "log off to protect"
+Offline-safe bases mean the optimal cowardly play is: farm, vault, log off. Counter-pressure:
+income requires being online to *collect past the offline cap*, best rolls/keys gate behind active
+objectives, and raiding is where the big rewards are. Watch session length vs. base value.
 
-### 4. Server size 12–16 vs. "live economy" is in tension
-A 16-player shard is great for personal raids but is **not** a persistent economy — bases don't
-persist across your sessions on one server, and offline targets must be synthesized.
-**Recommendation:** Be explicit that the "economy" is **per-account, cross-server** (profiles), and
-raid targets are **matchmade snapshots** pulled from MemoryStore/DataStore, not live foreign servers.
-Design the snapshot format early; it changes the data model. See `docs/ARCHITECTURE.md`.
+### 4. The flea market is an economy you can lose control of
+Order-book + player pricing invites **duping → fraud**, **price manipulation/wash trading**, and
+**RMT**. The item-UID single-location invariant is the dupe defense; velocity limits, listing taxes
+(a sink), full transaction logging, and per-account throttles are the manipulation/RMT defenses. This
+is the highest-risk system to ship — hence last, behind a proven-stable core economy. See
+`docs/FLEA_MARKET.md`.
 
-### 5. Bot/NPC targets are load-bearing and under-specified
-At launch and in low-population hours, there aren't enough real vaults to raid. If raiding a bot
-feels hollow, the loop's payoff half evaporates.
-**Recommendation:** Treat **snapshot bases** (real players' saved layouts, raided as async copies)
-as the primary raid target, not live players. This solves offline-fun, population, and matchmaking at
-once — and it's the model the successful games in this genre actually use.
-
-### 6. Emissive-primitive art is a real style — but juice is mandatory
-Without modeling, "game feel" carries the visuals. Screen shake, hitstop, particle bursts on steal
-completion, satisfying roll animations, sound design. Budget real time for juice; it's not polish,
-it's the product.
-
-> **Meta-point:** the biggest risk to a 20K-CCU target isn't any single mechanic — it's shipping the
-> loop before the *protection/fairness* systems (shields, matchmaking bands, offline caps) exist.
-> Build the loop and the fairness rails together, not sequentially.
+> **Meta:** the loop and its fairness rails (MMR, safezones, offline cap, income diminishing returns)
+> ship together in M2 — never the raid loop first and safety later.

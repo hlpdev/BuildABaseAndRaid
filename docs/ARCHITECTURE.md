@@ -8,10 +8,28 @@
 - **Data flows one way.** Server mutates authoritative state → replicates via ByteNet → clients
   derive UI through Vide sources. Clients never mutate authoritative state directly.
 
+## The server model: live bases, per-account economy
+
+**Bases are live and same-server.** When a player joins a match server, `BaseService` rebuilds their
+base (from the profile's `placed` list) into the shared world. All 12–16 players' bases coexist and
+are raidable in real time — **but only while their owner is present**. Log off → base is removed from
+the world and is safe.
+
+**The economy is per-account, cross-server.** Profiles are the source of truth; the **flea market**
+and **matchmaking** are the cross-server layers (MemoryStore + DataStore). There is no async snapshot
+raiding — raids are always live vs. an online owner.
+
+```
+Hub / lobby place  ──(MMR match, MemoryStore queue)──▶  Reserved match servers (12–16, MMR-banded)
+        │                                                        │
+        └────────────── profiles (ProfileStore) ────────────────┘
+                     flea market + leaderboards (MemoryStore/DataStore)
+```
+
 ## Realms and boundaries
 
 ```
-ReplicatedStorage/Shared      ← pure defs, math, net packet schemas (both realms)
+ReplicatedStorage/Shared      ← pure defs (Item/Rarity/Building), math, net schemas (both realms)
 ReplicatedStorage/Packages    ← Wally shared deps (Vide, ByteNet, Trove, Sift, Promise)
 ServerScriptService/Server    ← authoritative services + data access
 ServerScriptService/ServerPackages ← ProfileStore, Signal (never replicated)
@@ -22,80 +40,65 @@ ReplicatedFirst/Boot          ← anti-flash loading UI before the client boots
 ## Server services
 
 Single-responsibility modules with an explicit lifecycle (`init` then `start`), loaded by a small
-hand-rolled loader (~80 lines). **No Knit / no DI framework** — it's unmaintained and its networking
-model is exactly what we don't want at scale.
+hand-rolled loader (~80 lines). **No Knit / no DI framework.**
 
-| Service           | Owns |
-| ----------------- | ---- |
-| `DataService`     | ProfileStore sessions; the only module that touches persistence |
-| `RollService`     | Roll RNG, drop tables, cooldowns, pity/luck modifiers |
-| `InventoryService`| Carried items, equip/unequip, drop-on-death |
-| `VaultService`    | Vault contents, capacity, income accrual (online + offline cap) |
-| `RaidService`     | Steal channel timing, position validation, exit-zone banking, the steal transaction |
-| `BaseService`     | Base layout, placeable budget, defense simulation (turrets/traps) |
-| `MatchmakingService` | Builds/serves **base snapshots**, bands targets by net worth |
-| `EconomyService`  | Currency sinks/faucets, purchase fulfillment, receipt validation |
-| `CombatService`   | Server-side damage, ability resolution, death handling |
+| Service            | Owns |
+| ------------------ | ---- |
+| `DataService`      | ProfileStore sessions; the only module that touches persistence |
+| `RollService`      | Roll RNG, drop tables, pity/luck, server-authoritative |
+| `InventoryService` | Carried items, equip, drop-on-death, ground loot |
+| `VaultService`     | Vault contents, capacity, income accrual (online + offline cap) |
+| `BaseService`      | Rebuild/serialize bases, placement validation, part cap, **support graph** |
+| `RaidService`      | Raid tool damage application, breach/extract, position/LoS validation |
+| `CombatService`    | Server-side PvP damage, ability resolution, death handling |
+| `MatchmakingService` (hub) | MMR queue, reserved-server allocation, banding |
+| `RatingService`    | MMR + net-worth computation (hidden), friendly-level derivation |
+| `EconomyService`   | Coin sinks/faucets, purchase/receipt validation, income |
+| `FleaService`      | Order book, escrow, matching, price history (later milestone) |
 
 Services talk to each other in-process via `Signal` (no serialization). They talk to clients only via
 ByteNet packets defined in `src/shared/net`.
 
 ## Client controllers
 
-| Controller        | Owns |
-| ----------------- | ---- |
-| `NetController`   | Wraps ByteNet listeners → Vide sources (single replication entry point) |
-| `InputController` | Intent capture (roll, equip, build, channel-steal hold) |
-| `CameraController`| Raid/build camera modes |
-| `UIController`    | Mounts Vide app, routes screens |
-| `EffectsController`| Juice: shake, hitstop, particles, sound (see design doc §6) |
+| Controller         | Owns |
+| ------------------ | ---- |
+| `NetController`    | Single subscriber to server→client packets → Vide sources |
+| `InputController`  | Intents: roll, equip, place/remove part, raid-tool use, drop (Delete) |
+| `BuildController`  | Grid-snap placement preview, rotation, validity ghosting (client preview only) |
+| `CameraController` | Build / raid / combat camera modes |
+| `UIController`     | Mounts Vide app, routes screens (inventory, vault, shop, flea, market charts) |
+| `EffectsController`| Juice: destruction bursts, hitstop, shake, sound |
 
-UI is Vide components under `src/client/ui`. Replicated state lives in Vide **sources** owned by
-`NetController`; components read them reactively. Never fetch authoritative state imperatively in a
-component.
+Replicated state lives in Vide **sources** owned by `NetController`; components read them reactively
+and never fetch authoritative state imperatively.
 
-## The economy is per-account, not per-server
+## Scaling to 10K+ CCU
 
-**A 12–16 player shard is not the economy.** The economy is each player's **profile**, and raid
-targets are **matchmade snapshots**, not live foreign servers. This is the single most important
-architectural fact and it shapes the data model:
-
-- Your base layout + vault contents are periodically serialized into a **snapshot** and written to a
-  store keyed by net-worth band.
-- When you raid, `MatchmakingService` hands you a snapshot to instantiate locally on the server as an
-  async copy. You fight its (simulated) defenses and steal from its (frozen) vault.
-- A successful steal enqueues a **pending debit** against the victim's real profile, applied on their
-  next session load (or immediately if they're online). See `docs/DATA_MODEL.md`.
-
-This resolves offline-fun, low-population hours, matchmaking fairness, and dupe-safety in one model.
-
-## Scaling to 20K+ CCU
-
-- **Server size 12–16.** Personal raids; small live population per shard.
-- **Instance budget is the real limit.** Cap placeables per base (~50). Use `StreamingEnabled` and
-  stream distant/instantiated snapshot bases out aggressively. Never hold every base loaded per
-  client.
-- **Bandwidth is the second limit.** All gameplay replication is ByteNet buffers, not table
-  RemoteEvents (5–10× reduction on the vault/raid/transfer traffic). See `docs/NETWORKING.md`.
-- **Parallel Luau (Actors).** Turret targeting and raid pathfinding run hot across many bases; move
-  them into Actors with `task.desynchronize()` for per-frame work. Keep authoritative mutation on the
-  serial thread.
-- **Cross-server data.** `MemoryStoreService` sorted maps for the weekly leaderboard and the
-  matchmaking queue — DataStores are too slow and rate-limited for that. Profiles stay in
-  DataStore via ProfileStore.
-- **DataStore budgets** are per-key/per-server. The steal touches two profiles; make it idempotent
-  with a transaction ID and never assume both writes land in one tick.
+- **Server size 12–16**, MMR-banded reserved servers (`docs/MATCHMAKING.md`).
+- **Instance budget is the real limit.** Hard per-base part cap; `StreamingEnabled` with per-base
+  streaming so a client loads only nearby bases. Never hold all bases loaded per client.
+- **Destruction is deterministic** (HP + support graph, no physics) — see
+  `docs/BUILDING_AND_RAIDING.md`.
+- **Bandwidth** — all gameplay replication is ByteNet buffers with delta updates
+  (`docs/NETWORKING.md`).
+- **Parallel Luau (Actors)** for turret targeting + raid pathfinding; authoritative writes stay
+  serial.
+- **Cross-server data** — MemoryStore sorted maps for matchmaking queue, leaderboards, flea price
+  series; DataStore (per-experience limits, 2026) for profiles via ProfileStore. Exponential backoff
+  on conflicts; shard hot maps.
 
 ## Boot sequence
 
-1. `ReplicatedFirst/Boot` shows a loading screen immediately (anti-flash; `CharacterAutoLoads` is
-   off).
-2. Server `DataService` loads the profile (session lock) before spawning the character.
-3. Server replicates initial state via ByteNet; client `NetController` populates Vide sources.
-4. Client mounts UI, requests character spawn, tutorial begins for new accounts.
+1. `ReplicatedFirst/Boot` shows a loading screen immediately (`CharacterAutoLoads` off).
+2. Hub: player queues; `MatchmakingService` bands and teleports to a reserved match server.
+3. Match server: `DataService` loads the profile (session lock); `BaseService` rebuilds the base into
+   the world; `RatingService` refreshes net worth.
+4. Server replicates initial state via ByteNet; client `NetController` populates Vide sources.
+5. Client mounts UI, spawns character (in safezone), tutorial for new accounts.
 
 ## Testing
 
-Pure logic in `src/shared` (drop tables, income math, economy curves, snapshot serialization) is unit
--tested with Jest. Anything touching Roblox services is exercised in Studio / via `run-in-roblox`
-(deferred — see `docs/ROADMAP.md`). Keep game math pure so it's testable off-engine.
+Pure logic in `src/shared` (drop tables, income math, damage-vs-tier tables, support-graph algorithm,
+economy curves, order-matching) is unit-tested with Jest — keep it side-effect-free. Roblox-touching
+code is exercised in Studio / via `run-in-roblox` (deferred, see `docs/ROADMAP.md`).

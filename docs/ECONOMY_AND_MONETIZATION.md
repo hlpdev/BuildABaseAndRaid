@@ -1,79 +1,78 @@
 # Economy & Monetization
 
-Design goal: a self-correcting economy that stays fun for a new player on day 30 while monetizing
-**edge and time**, not the core verb. Two currencies:
+Goal: a self-correcting economy that stays fun for a day-30 player while monetizing **edge and time**,
+never raw power. Two currencies:
 
-- **Coins** — soft currency. Earned via vault income and successful raids. Sunk into base upgrades,
-  vault capacity, and roll-cooldown reductions.
-- **Gems** — hard currency. Bought or earned sparsely. Sunk into luck multipliers, cosmetics, extra
-  vault slots, and shields.
+- **Coins** — soft. Earned from vault income, raids, quests, and flea sales. Sunk into **building
+  parts** (primary sink), upgrades, roll costs, and flea taxes.
+- **Gems** — hard. Bought or earned sparsely. Sunk into luck, cosmetics, vault slots, shields, boosts.
 
 ## Faucets (coin sources)
 
-- Vault income (per-second, offline-capped ~4h).
-- Successful raids (scaled by the net-worth *gap* — see below).
-- Daily login rewards; day-7 guaranteed high-rarity roll.
-- Quests / tutorial completion (one-time).
+- Vault passive income (offline-capped ~few hours; diminishing returns past a soft cap).
+- Successful raids (scaled by the MMR/net-worth **gap** — raiding up pays, raiding down doesn't).
+- Daily login + streak (day-7 guaranteed high-rarity roll).
+- Quests / tutorial (one-time).
+- Flea sales (secondary — moves value between players, net-neutral minus tax).
 
 ## Sinks (where coins die)
 
-- Base defenses and upgrades (walls, turrets, traps, levels).
-- Vault capacity + steal-time multiplier upgrades.
-- Roll-cooldown reductions.
-- Repair after raids (soft sink that scales with base value).
+- **Building parts** — the main sink; every wall/door/vault costs coins and gets destroyed in raids
+  (repair/rebuild = recurring sink).
+- Part and vault **upgrades** (higher tier = more HP + income).
+- **Roll costs** beyond the free cadence.
+- **Flea listing + sale taxes** (also throttles manipulation).
+- Base repair after raids (scales with base value).
 
-A healthy economy keeps total sinks ≥ faucets for engaged players. Instrument the coin
-faucet/sink ratio per net-worth band from day one; inflation is the silent economy killer.
+Keep total sinks ≥ faucets for engaged players. Instrument the **faucet/sink ratio per MMR band** from
+day one — inflation is the silent economy killer, and a destructible-base game has a naturally strong
+sink (rebuilding) that helps.
 
-## The anti-runaway rules (critical — see Game Design §3)
+## Anti-runaway rules (critical)
 
-1. **Raid rewards scale with the gap.** Raiding *up* (richer target) pays well; raiding *down* pays
-   little. This funds newcomers and taxes the top.
-2. **Vault income has diminishing returns past a soft cap.** Hoarding stops being linearly better, so
-   the rich can't out-accrue everyone permanently.
-3. **Matchmaking bands by net worth**, but bands overlap upward so ambitious players can punch up for
-   a bigger score at higher risk.
-4. **Bigger hoards are bigger targets, not safer ones** — steal difficulty scales with rarity, but
-   total exposure scales with total stored value.
+1. **Raid rewards scale with the gap** — raiding a richer/higher-MMR base pays well; punching down
+   pays little. Funds newcomers, taxes the top.
+2. **Vault income has diminishing returns past a soft cap** — hoarding stops being linearly better.
+3. **MMR bands** put you against peers; bigger hoards mean bigger targets, not safer ones.
+4. **Destruction is a natural wealth tax** — the rich rebuild more, sinking coins back out.
 
-## Monetization (sell edge + time, never the verb)
-
-The free roll stays frequent to keep the loop alive. Paid products accelerate and enhance:
+## Monetization (sell edge + time, never raw power)
 
 | Product | Type | Sells |
 | ------- | ---- | ----- |
-| Luck Multiplier | Gamepass / timed | Better roll odds (edge) |
+| Gem packs | Developer Product | Hard currency |
+| Luck Multiplier | Gamepass / timed | Better roll odds (edge, not guarantees) |
 | Auto-Roll | Gamepass | Rolls while away (time) |
 | Extra Vault Slots | Gamepass | Capacity (edge) |
-| Faster Steal Channel | Gamepass | Raid speed (edge) |
+| Income Boost | Gamepass / timed | Faster passive income (time) |
+| Bigger Plot / Part Cap+ | Gamepass | Build bigger (careful: perf + fairness) |
+| Shields | Consumable (gems) | Raid-immunity window (safety) |
 | VIP / Season Pass | Subscription-style | Daily gems, cosmetics, small QoL |
-| Shields | Consumable (gems) | Raid immunity window (safety) |
-| Gem packs | Developer Product | Hard currency |
-| Cosmetics | Product | Neon skins, vault themes, trails (pure vanity) |
+| Cosmetics / Skins | Product | Weapon skins, base themes, neon trails (pure vanity) |
 
-**Guardrails so it doesn't become pay-to-win:**
-- Never sell raw combat power or direct currency-for-vault-safety in a way that makes a spender
-  un-raidable — that breaks the loop for everyone else and kills the target pool.
-- Luck multipliers change *odds*, not *guarantees*; whales still gamble.
-- Shields are time-boxed and visible to raiders (so protected bases aren't matchmade as targets),
-  preventing "permanent fortress" accounts.
+**Guardrails (so it stays Mild-9+ friendly and not pay-to-win):**
+- Never sell raw combat power or make a spender **un-raidable** — that breaks the target pool for
+  everyone.
+- Luck changes **odds, not guarantees**; whales still gamble (published drop rates must match server
+  tables — Roblox policy).
+- Shields are time-boxed and mark a base **un-matchmadable**, preventing permanent-fortress accounts.
+- "Bigger plot / part cap" upgrades must respect the perf cap and MMR fairness — cap the cap.
 
-## Rolling / gacha integrity
+## Flea market's economic role
 
-- **Publish real drop rates** (Roblox policy + trust). The rates in UI must equal the server table.
-- **Pity system** to cap bad luck: guaranteed rarity floor after N rolls without one; store pity
-  counters server-side per rarity, never expose them in snapshots.
-- RNG is server-side with a recorded seed for auditability; the client never rolls.
+The flea (see `docs/FLEA_MARKET.md`) is a **value-transfer layer**, not a faucet — it's net-neutral in
+coins minus taxes. Its jobs: give rolled items a **liquid price** (so loot always has meaning), create
+a **trading meta** (a retention hook across all ages), and act as a **sink** via taxes. Its risk
+(dupe→fraud, manipulation, RMT) is why it ships last and why the item-UID invariant is sacred.
 
-## Retention economy (the day-7 machine)
+## Compliance-aware monetization
 
-- Escalating login streak → day-7 guaranteed high-rarity roll.
-- **Mythic of the Week**: one Mythic rollable for 7 days only. Drives FOMO return without permanent
-  power creep (rotates out).
-- Weekly "value stolen" leaderboard with cosmetic + gem rewards; resets Monday via MemoryStore.
+Targeting **Mild 9+ / Roblox Select (9–15)** means monetization must avoid predatory patterns that
+draw scrutiny: publish odds, no fake-scarcity dark patterns, clear gem pricing, no gambling-styled
+loops beyond standard published-odds rolls. Complete the content-maturity questionnaire pre-launch.
 
 ## Metrics to instrument from day one
 
-D1/D7 retention, session length, coin faucet/sink ratio per band, robbed-then-churned rate, ARPDAU,
-roll→purchase funnel, and raid win-rate by band. The design decisions above are hypotheses; these
-metrics are how we find out which ones are wrong.
+D1/D7 retention, session length, **coin faucet/sink ratio per MMR band**, robbed-then-churned rate by
+band, ARPDAU, roll→purchase funnel, raid win-rate by band, and (once live) flea volume, spread, and
+wash-trade flags. Every balance decision above is a hypothesis these metrics test.

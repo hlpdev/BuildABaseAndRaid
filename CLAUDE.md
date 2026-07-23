@@ -19,22 +19,40 @@ that as a style, not a gap to apologize for.
 - Claude's role is **advisor first**. Challenge weak decisions with reasoning. Do not be a yes-man.
   If a request will hurt retention, scaling, or security, say so and propose the better path.
 
+## The game model (read before touching systems)
+
+- **Buy parts, roll loot.** Building parts are purchased (coin sink); gear/abilities/raid-tools/props
+  are rolled (gacha faucet).
+- **Live same-server bases.** A player's base rebuilds into the world when they're online and is
+  **raidable only while they're online**; offline = removed from world = safe. There is **no** async
+  snapshot raiding. The economy is per-account (profiles) + cross-server (flea, matchmaking).
+- **Full destruction, no physics.** Parts have HP + material tier; raid tools deal typed damage;
+  destroyed at 0 HP; a server-side **support graph** (event-driven, not per-frame) handles collapse.
+- **Full-loot on death for carried items; currency never drops.** Deliberate Delete-drop exists.
+  Vaulted items are safe unless breached.
+- **Hidden MMR** bands players into reserved servers; players see a friendly level only.
+- **Order-book flea market** ships last but the item model supports it from day one.
+
 ## Golden rules (architecture)
 
 1. **Server is the single source of truth.** The client renders replicated state and sends
-   *intents*, never *outcomes*. The client never says "I completed the steal" — the server runs the
-   channel timer and validates position every tick. See `docs/ANTI_EXPLOIT.md`.
-2. **`src/shared` is pure.** Deterministic, no side effects, no service singletons, safe to require
-   from both realms. Definitions and math live here; behavior does not.
-3. **Networking goes through ByteNet packets** defined once in `src/shared/net`. No raw
-   RemoteEvents for gameplay traffic — bandwidth is the CCU bottleneck.
-4. **All persistence is session-locked via ProfileStore.** Items can be duplicated if two sessions
-   touch one profile. Never bypass the session lock.
-5. **The steal is an idempotent, ordered transaction** with a transaction ID: remove-from-victim →
-   commit → add-to-raider → commit. Design for a server dying mid-transfer. See `docs/DATA_MODEL.md`.
-6. **Every connection, thread, and instance goes in a Trove.** Long-session servers die from leaks.
-7. **Cap per-base placeables (~50) and stream distant bases out.** Instance count is what kills the
-   CCU target, not CPU.
+   *intents*, never *outcomes*. Breach damage, vault extraction, and casts are server-timed and
+   validated every tick. See `docs/ANTI_EXPLOIT.md`.
+2. **The item-UID single-location invariant is sacred.** Every item is a server-minted global UID in
+   exactly one of {inventory, vault, ground, flea escrow}, moved only by the server, only atomically.
+   This is the root dupe/fraud defense. See `docs/DATA_MODEL.md`.
+3. **`src/shared` is pure.** Deterministic, no side effects, no singletons, safe from both realms.
+   Definitions and math live here; behavior does not.
+4. **Networking goes through ByteNet packets** in `src/shared/net`. No raw RemoteEvents for gameplay;
+   deltas on the hot path. Bandwidth is a CCU bottleneck.
+5. **All persistence is session-locked via ProfileStore.** Never bypass the session lock.
+6. **Value moves are idempotent `txId` transactions**, ordered so the worst-case failure is a delayed
+   credit, never a destroyed item. Design for a server dying mid-transfer.
+7. **Every connection, thread, and instance goes in a Trove.** Long-session servers die from leaks.
+8. **Hard per-base part cap + stream distant bases out.** Instance count is what kills the CCU
+   target, not CPU. Destruction batches removed UIDs into one replication message.
+9. **Server owns all stats.** Item damage, part HP, income, MMR, prices — read from def tables or
+   computed server-side, never from the wire.
 
 ## Code conventions
 
