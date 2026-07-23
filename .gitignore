@@ -1,0 +1,33 @@
+# Wally-installed packages (restored via `wally install`)
+/Packages/
+/ServerPackages/
+/DevPackages/
+
+# Generated artifacts
+/sourcemap.json
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+build.rbxlx
+*.rbxl.lock
+
+# Wally lockfile is intentionally COMMITTED (see below) — do not ignore it.
+# wally.lock
+
+# Editor / OS
+.DS_Store
+*.swp
+*.swo
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.luau-analyze/
+.zed/
+# Fetched Roblox API type defs (restored via `just defs`)
+/.luau-analyze/
+
+# Env / secrets — never commit publish tokens or place files with keys
+.env
+*.local
+open-cloud-*.json

@@ -1,0 +1,66 @@
+{
+	"name": "build-a-base-and-raid",
+	"globIgnorePaths": ["**/*.spec.luau", "**/*.test.luau"],
+	"tree": {
+		"$className": "DataModel",
+
+		"ReplicatedStorage": {
+			"$className": "ReplicatedStorage",
+			"Shared": { "$path": "src/shared" },
+			"Packages": { "$path": "Packages" }
+		},
+
+		"ReplicatedFirst": {
+			"$className": "ReplicatedFirst",
+			"Boot": { "$path": "src/replicatedfirst" }
+		},
+
+		"ServerScriptService": {
+			"$className": "ServerScriptService",
+			"Server": { "$path": "src/server" },
+			"ServerPackages": { "$path": "ServerPackages" }
+		},
+
+		"StarterPlayer": {
+			"$className": "StarterPlayer",
+			"StarterPlayerScripts": {
+				"$className": "StarterPlayerScripts",
+				"Client": { "$path": "src/client" }
+			},
+			"StarterCharacterScripts": {
+				"$className": "StarterCharacterScripts"
+			}
+		},
+
+		"Workspace": {
+			"$className": "Workspace",
+			"$properties": {
+				"FilteringEnabled": true,
+				"StreamingEnabled": true,
+				"StreamingMinRadius": 64,
+				"StreamingTargetRadius": 256
+			}
+		},
+
+		"Lighting": {
+			"$className": "Lighting",
+			"$properties": {
+				"Technology": "Future",
+				"Ambient": [0, 0, 0],
+				"ClockTime": 0
+			}
+		},
+
+		"SoundService": {
+			"$className": "SoundService",
+			"$properties": { "RespectFilteringEnabled": true }
+		},
+
+		"Players": {
+			"$className": "Players",
+			"$properties": {
+				"CharacterAutoLoads": false
+			}
+		}
+	}
+}

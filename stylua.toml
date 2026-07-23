@@ -1,0 +1,16 @@
+# StyLua formatting config.
+# call_parentheses = "None" enforces Vide's parenthesis-less call style project-wide:
+#   local text = source "hello"
+#   local frame = create "Frame" { ... }
+# This is a deliberate house style. If it ever fights a non-Vide package, switch to "Input".
+column_width = 100
+line_endings = "Unix"
+indent_type = "Tabs"
+indent_width = 4
+quote_style = "AutoPreferDouble"
+call_parentheses = "Input"
+collapse_simple_statement = "Never"
+syntax = "Luau"
+
+[sort_requires]
+enabled = true

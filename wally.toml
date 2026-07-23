@@ -1,0 +1,31 @@
+[package]
+name = "hlpdev/build-a-base-and-raid"
+description = "Build A Base And Raid — a Roblox base-building / loot-stealing PvP game."
+version = "0.1.0"
+license = "MIT"
+authors = ["hlpdev"]
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+exclude = ["**"]
+include = [
+	"src",
+	"wally.toml",
+	"default.project.json",
+	"README.md",
+	"LICENSE",
+]
+
+[dependencies]
+Vide = "centau/vide@0.4.1"           # Reactive UI + reactive state (sources/effects/spring)
+Trove = "sleitnick/trove@1.8.0"      # Deterministic cleanup handles (connections/instances/threads)
+Promise = "evaera/promise@4.0.0"     # Async with explicit failure modes (DataStore/Teleport/Marketplace)
+ByteNet = "ffrostflame/bytenet@0.4.6" # Buffer-serialized networking — the CCU-critical dependency
+Sift = "csqrl/sift@0.0.11"           # Immutable table ops — pairs with Vide reactivity
+
+[server-dependencies]
+ProfileStore = "lm-loleris/profilestore@1.0.3" # Session-locked persistence (loleris, canonical)
+Signal = "sleitnick/signal@2.0.3"              # Server-side service-to-service events
+
+[dev-dependencies]
+Jest = "jsdotlua/jest@3.10.0"
+JestGlobals = "jsdotlua/jest-globals@3.10.0"

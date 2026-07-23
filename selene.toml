@@ -1,0 +1,8 @@
+std = "roblox"
+exclude = ["Packages/", "ServerPackages/", "DevPackages/"]
+
+[rules]
+# Vide scoped effects shadow names constantly and intentionally.
+shadowing = "allow"
+# luau-lsp owns type-level correctness; don't double-report it here.
+incorrect_standard_library_use = "allow"

@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Format · Lint · Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rokit toolchain
+        uses: CompeyDev/setup-rokit@v0.1.2
+
+      - name: Cache Wally packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            Packages
+            ServerPackages
+            DevPackages
+          key: wally-${{ runner.os }}-${{ hashFiles('wally.lock', 'wally.toml') }}
+          restore-keys: wally-${{ runner.os }}-
+
+      - name: Install Wally packages
+        run: wally install
+
+      - name: Generate sourcemap
+        run: rojo sourcemap default.project.json --output sourcemap.json
+
+      - name: Re-inject package types
+        run: |
+          wally-package-types --sourcemap sourcemap.json Packages/ || true
+          wally-package-types --sourcemap sourcemap.json ServerPackages/ || true
+
+      - name: Fetch Roblox type definitions
+        run: |
+          mkdir -p .luau-analyze
+          curl -fsSL -o .luau-analyze/globalTypes.d.luau https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.PluginSecurity.d.luau
+          curl -fsSL -o .luau-analyze/api-docs.json https://raw.githubusercontent.com/MaximumADHD/Roblox-Client-Tracker/roblox/api-docs/en-us.json
+
+      - name: StyLua (check)
+        run: stylua --check src/
+
+      - name: Selene
+        run: selene src/
+
+      - name: Luau analyze
+        run: |
+          if find src -name '*.luau' | grep -q .; then
+            luau-lsp analyze --sourcemap=sourcemap.json --defs=.luau-analyze/globalTypes.d.luau --docs=.luau-analyze/api-docs.json --settings=.vscode/settings.json --ignore="Packages/**" --ignore="ServerPackages/**" --ignore="DevPackages/**" src/
+          else
+            echo "no .luau files in src/ yet — skipping analyze"
+          fi
+
+  build:
+    name: Build place file
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: CompeyDev/setup-rokit@v0.1.2
+      - run: wally install
+      - name: Build
+        run: rojo build default.project.json --output build.rbxlx
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: place-file
+          path: build.rbxlx
+          if-no-files-found: error
