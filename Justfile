@@ -47,7 +47,7 @@ fmt-check:
 lint:
     selene src/
     @if find src -name '*.luau' | grep -q .; then \
-        luau-lsp analyze --sourcemap=sourcemap.json --defs=.luau-analyze/globalTypes.d.luau --docs=.luau-analyze/api-docs.json --settings=.vscode/settings.json --ignore="Packages/**" --ignore="ServerPackages/**" --ignore="DevPackages/**" src/; \
+        luau-lsp analyze --sourcemap=sourcemap.json --defs=.luau-analyze/globalTypes.d.luau --settings=.vscode/settings.json --ignore="Packages/**" --ignore="ServerPackages/**" --ignore="DevPackages/**" src/; \
     else echo "no .luau files in src/ yet — skipping analyze"; fi
 
 # Run unit tests. Placeholder until the Jest runner lands (see docs/ROADMAP.md).
