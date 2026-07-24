@@ -32,6 +32,14 @@ that as a style, not a gap to apologize for.
   Vaulted items are safe unless breached.
 - **Hidden MMR** bands players into reserved servers; players see a friendly level only.
 - **Order-book flea market** ships last but the item model supports it from day one.
+- **Mobile/console-first.** Every interaction works thumb-on-glass and on gamepad; KBM is third. No
+  system reads raw input — all go through `InputController` intents. See `docs/PLATFORMS_AND_INPUT.md`.
+- **Dummy models now.** Parts/items are colored primitives; real models swap in behind the def tables
+  later. Content lives in `src/shared/defs` — adding an item/part is a one-file diff.
+- **Rarity ≠ price/stats.** A tier sets *only* drop rate + UI color. Item stats are per-item; price is
+  market-only. There are **more than six** tiers.
+- **Vaults are placeable & plural** — multiple types/levels, placed anywhere; income sums across them.
+- **The Forge** combines N same-rarity items into one random next-rarity item (item sink + gamble).
 
 ## Golden rules (architecture)
 

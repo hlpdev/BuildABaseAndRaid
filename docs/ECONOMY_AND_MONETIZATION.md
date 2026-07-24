@@ -28,6 +28,22 @@ Keep total sinks ≥ faucets for engaged players. Instrument the **faucet/sink r
 day one — inflation is the silent economy killer, and a destructible-base game has a naturally strong
 sink (rebuilding) that helps.
 
+## The Forge (item sink + up-tier gamble)
+
+A hub installation: combine several items **of the same rarity** into **one random item of the next
+rarity up**. It's a gambling-flavored chase *and* the game's primary **item sink** — it destroys its
+inputs, which is what keeps the flea market from drowning in commons over time. The combine count is a
+tuned constant; the top rarity can't forge upward. The Forge is deliberately an **item** sink, not a
+coin sink (an optional small coin fee per forge is available as a tuning lever). Watch item supply per
+rarity per week — if a tier inflates, the Forge ratio or drop weights are miscalibrated.
+
+## Tiers are not prices
+
+A rarity **tier sets only drop rate + UI color** — never price, combat value, or income. An item's
+income "value" is a def field; its **price is 100% market-determined**. A rare item can be cheap if
+it's weak or abundant; a common item can be pricey if it's useful and scarce. This keeps rarity honest
+(it means "hard to roll," nothing more) and lets the flea discover real value.
+
 ## Anti-runaway rules (critical)
 
 1. **Raid rewards scale with the gap** — raiding a richer/higher-MMR base pays well; punching down

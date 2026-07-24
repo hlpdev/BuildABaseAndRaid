@@ -44,7 +44,10 @@ standing. No live physics. See `docs/BUILDING_AND_RAIDING.md`.
 
 ## Loot
 
-Rolled from rarity tiers with **published drop rates** (Common → Mythic). Categories:
+Rolled from **rarity tiers** (more than six; e.g. Common → … → Divine) with **published drop rates**.
+Crucially, **a tier defines only two things: its drop rate and its UI color.** Tiers do **not** set
+price, combat value, or income — an item's stats are per-item, and its price is set entirely by the
+market. A high-tier item is *rare*, not automatically *strong* or *expensive*. Categories:
 
 - **Weapons** — PvP.
 - **Abilities** — code-only, functional (e.g. *Phase Dash*, *Chain Lightning*), never bare stat buffs.
@@ -86,6 +89,20 @@ Full-loot PvP for a 9+ audience only works if minnows don't get fed to sharks.
 - **Hub/spawn is a safezone.** New players get a **protection window**. Both are backstops; MMR
   banding is the primary fairness mechanism.
 
+## Safe zones (the hub)
+
+The hub is a non-combat, non-theft zone with exactly two interactive installations (nothing else is
+interactive there):
+
+- **The Forge** — combine several items **of the same rarity** into **one random item of the next
+  rarity up**. A gambling-flavored **up-tier** mechanic and a powerful **item sink** (it destroys the
+  inputs). Players will feed it their commons to chase higher tiers. The top tier can't forge upward.
+  Combine count is a tuned constant. See `docs/ECONOMY_AND_MONETIZATION.md`.
+- **The Market** — where the flea market lives: walk up to Market NPCs, they pop the market UI (browse,
+  charts, buy/sell orders). Purely UI-driven; no other world interaction.
+
+The hub is also the matchmaking lobby and the safezone backstop for new players.
+
 ## Global flea market
 
 An async, player-run **order-book exchange** (Steam-market / Tarkov flea in spirit): global listings,
@@ -108,11 +125,26 @@ optimal). Never computed client-side.
   raided/traded" leaderboards; rotating limited items (FOMO return); a market worth checking daily.
 - **Protection window** for new accounts so the first bad beat doesn't end the relationship.
 
-## Content rating target: Mild (9+)
+## Platforms: mobile & console first
 
-To be eligible for Roblox Select (9–15) we hold a **Mild 9+** rating: cartoon/unrealistic combat, no
-realistic gore or weapons, safe-chat only. Complete the content-maturity questionnaire before public
-launch. This is a hard design constraint on art and combat feel, not an afterthought.
+Most of Roblox plays on phones and consoles. Building, breaching, combat, and the market are all
+designed to be fully playable **thumb-on-glass and on a gamepad** first, mouse+keyboard third. This is
+a hard design constraint on every interaction. See `docs/PLATFORMS_AND_INPUT.md`.
+
+## Audience & launch phasing (verified 2026)
+
+Reaching under-16 players is **gated on traction**, not just content:
+
+- To be playable by under-16s (Roblox Kids 5–8, Select 9–15), a game must pass a **3-step review**,
+  which only completes after **500 unique plays by "highly engaged," age-checked users in a 60-day
+  window** (the metric is deliberately vague to resist botting). Drop below **100** active in 60 days
+  and under-16 access is lost until 500 is re-hit. Creator prerequisites: account in good standing,
+  ID/parent verification, 2FA. Content must be **Minimal or Mild** (Mild = Select).
+- **Therefore we phase the launch:** ship to **16+/general**, drive to **500 highly-engaged
+  age-verified players** on ad spend, *then* unlock under-16 on review. We build **Mild-9+ compliant
+  from day one** (cartoon/unrealistic combat, no realistic gore/weapons, safe chat) so we pass the
+  instant we qualify — but the first ~60 days are planned as a 16+ game. The hardcore full-loot
+  audience skews older anyway, so this ordering fits.
 
 ---
 

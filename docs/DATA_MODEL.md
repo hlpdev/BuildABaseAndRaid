@@ -25,11 +25,13 @@ Profile.Data = {
     currency = { coins = 0, gems = 0 },  -- coins NOT lost on death; deliberate-drop only
 
     inventory = {                        -- CARRIED items (drop on death)
-        -- [uid] = { def, tier?, rolledAt, seed }
+        -- [uid] = { def, rolledAt, seed }   -- rarity/color/stats come from the def, not stored here
     },
 
-    vault = {                            -- STORED items (income + raidable-only-when-breached)
-        -- [uid] = { def, tier?, storedAt }
+    vaults = {                           -- STORED items, keyed by the PLACED VAULT part's uid.
+        -- [vaultUid] = { items = { [itemUid] = { def, storedAt } } }
+        -- A vault's slots + income multiplier come from its BuildingDef (via base.placed).
+        -- Income + raidability are per-vault; a base can have many vaults placed anywhere.
     },
 
     fleaEscrow = {                       -- items + coins locked in listings/orders
@@ -99,9 +101,11 @@ credit-before-debit (raid) both follow this rule.
 ## Passive income
 
 `income = min(cap, ratePerSec * (now - incomeAccruedAt))`, applied on load/collect, then
-`incomeAccruedAt = now`. `ratePerSec` = Σ(vault tier × stored item value) × boosts/gamepasses, subject
-to a **diminishing-returns soft cap** (anti-hoard) and a **~few-hour offline cap** (return incentive).
-Never computed client-side.
+`incomeAccruedAt = now`. `ratePerSec` sums **across all placed vaults**: for each vault,
+`(vault incomeMult from its BuildingDef) × (value of items stored in that vault)`, then × player
+boosts/gamepasses — subject to a **diminishing-returns soft cap** (anti-hoard) and a **~few-hour
+offline cap** (return incentive). Never computed client-side. (Item "value" for income is a def field,
+independent of rarity and of market price.)
 
 ## Base persistence
 

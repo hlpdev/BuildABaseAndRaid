@@ -103,9 +103,10 @@ Read in this order:
 6. [`docs/FLEA_MARKET.md`](docs/FLEA_MARKET.md) — order-book exchange + anti-fraud
 7. [`docs/NETWORKING.md`](docs/NETWORKING.md) — ByteNet packets and replication
 8. [`docs/ANTI_EXPLOIT.md`](docs/ANTI_EXPLOIT.md) — server authority rules
-9. [`docs/ECONOMY_AND_MONETIZATION.md`](docs/ECONOMY_AND_MONETIZATION.md) — sinks, faucets, products
-10. [`docs/ASSET_PIPELINE.md`](docs/ASSET_PIPELINE.md) — sourcing art without in-house modeling
-11. [`docs/ROADMAP.md`](docs/ROADMAP.md) — build order and milestones
+9. [`docs/ECONOMY_AND_MONETIZATION.md`](docs/ECONOMY_AND_MONETIZATION.md) — sinks, faucets, Forge, products
+10. [`docs/PLATFORMS_AND_INPUT.md`](docs/PLATFORMS_AND_INPUT.md) — mobile/console-first controls & perf
+11. [`docs/ASSET_PIPELINE.md`](docs/ASSET_PIPELINE.md) — dummy models now, commissioned art later
+12. [`docs/ROADMAP.md`](docs/ROADMAP.md) — build order, launch phasing, milestones
 
 ## License
 

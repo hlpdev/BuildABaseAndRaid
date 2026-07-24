@@ -14,23 +14,46 @@ vault" fantasy, **deterministically, with zero live physics**, at 10K+ CCU.
 4. **Hard per-base part cap.** A fixed budget (e.g. ~200–400, tuned) bounds worst-case instance count
    and raid cost. Hitting the cap is a design pressure (build smart), not a bug.
 
-## Part model
+## Parts: variable-size, rectangular, grid-aligned
+
+Bases are **large**. Parts come in **many sizes** but are always **rectangular/square and
+grid-aligned — no triangles, nothing that can't snap to the grid.** Kinds include: `Foundation`,
+`Floor`, `Wall`, `HalfWall`, `DoorFrame`, `Door`, `Hatch`, `Ladder`, `Ramp`, `Pillar`, and `Vault`
+(see vaults below). Each kind has a **footprint + height** (in grid units) declared in its def, so a
+wall, a half-wall, and a floor occupy the grid differently but all snap cleanly.
+
+A `material` (`Wood` / `Stone` / `Metal`, extensible) is **separate from `kind`** and drives HP and
+damage resistances. Grid resolution and level height are tunables in `src/shared/Config`.
 
 Each placed part is a def reference + instance state:
 
 ```
 Placed = {
     uid,                 -- server-minted, unique within the base
-    kind,                -- "wall" | "door" | "hatch" | "ladder" | "vault" | "foundation" | ...
-    tier,                -- "wood" | "stone" | "metal"  (drives HP + damage resistances)
-    gridPos, rot,        -- snapped, server-validated
-    hp, maxHp,           -- current / max
+    defKey,              -- -> BuildingDefs entry (kind, material, size, hp, resist, cost, ...)
+    gridPos, rot,        -- snapped, server-validated (rot in 90° steps)
+    hp,                  -- current (maxHp comes from the def)
     level,               -- upgrade level (vaults, doors)
+    -- Vault instances additionally carry their stored item UIDs (see below).
 }
 ```
 
-Stats (HP, resistances, income for vaults, cost) come from `src/shared/defs/BuildingDefs`, never from
+**Dummy models for now:** every part renders as a **colored Part** (color = material/variant/tier)
+until real models are commissioned. The def carries a `color`; swapping in a model later never touches
+the simulation. See `docs/ASSET_PIPELINE.md`.
+
+All stats (HP, resistances, size, income, cost) come from `src/shared/defs/BuildingDefs`, never from
 the wire — rebalancing is a one-file change and untamperable.
+
+## Vaults are placeable, typed, and plural
+
+A vault is **not** a fixed object on the plot. There are **multiple vault types and levels**, each a
+placeable part the player can put **anywhere inside their base**. A vault def carries **storage slots**
+and an **income multiplier**; higher types/levels store more and/or boost income more (and cost more,
+and have more HP). Passive income sums across **all** the player's placed vaults. This makes base
+layout a real decision: spread vaults out (harder to raid all of them) or cluster them (easier to
+defend, easier to lose at once). Stored item UIDs live on the specific vault instance (see
+`docs/DATA_MODEL.md`).
 
 ## Structural integrity — the support graph (cheap, event-driven)
 
@@ -49,10 +72,14 @@ destruction events.
 
 ## Damage & raid tools
 
-- **Raid tools are rolled loot** (charges, cutters, drills), each with a **damage type** and profile.
-- **Typed damage vs. tier**: e.g. explosive is strong vs. stone, weak vs. metal; cutters strong vs.
-  metal doors, useless on walls. Raids are solved by **tool-vs-tier math**, deliberately, so balance
-  lives in a table — not in physics.
+- **Raid tools are rolled loot** (charges, cutters, drills, thermite), each with a **damage type**
+  (`Explosive` / `Ballistic` / `Kinetic` / `Fire`, extensible) and its own **damage amount** — like
+  Rust, not every tool (or weapon) hits equally hard.
+- **Asymmetric resistance:** damage is scaled by the target's **material** *and* **structure type** —
+  e.g. explosives strong vs. stone but poor vs. metal; cutters shred metal doors but barely scratch
+  walls; fire good vs. wood. Each `BuildingDef` carries a per-damage-type `resist` multiplier. Raids
+  are solved by **tool-vs-material/type math**, deliberately, so balance lives in a table — not in
+  physics. Picking the right tool for the wall you're hitting is the skill.
 - Damage is applied **server-side** on validated tool use (ownership, cooldown, position, LoS to the
   target part every tick). See `docs/ANTI_EXPLOIT.md`.
 - Doors/hatches have their own HP and can be **lock-broken** or **destroyed**; vaults have the highest

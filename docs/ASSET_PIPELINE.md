@@ -4,7 +4,22 @@ Neither developer models or animates. This is a **budget-allocation and sourcing
 blocker — most of the game's "feel" is code (VFX, UI, juice), which is our strength. This doc says
 where the friend's funding goes and what we build ourselves.
 
-## Principle: spend on the critical path, code the rest
+## Phase 1 (now → launch): dummy models everywhere
+
+**Build the entire game with placeholder primitives first.** Every building part is a **colored
+Part** (color = variant/material/tier); every item is a stand-in icon; weapons/tools are simple
+Parts. This is deliberate, not a stopgap excuse:
+
+- It **unblocks all gameplay/systems work immediately** — we don't wait on any artist.
+- Dummy parts are **cheap** (critical for the mobile perf budget), so the game is playable and
+  tunable at scale from day one.
+- Real models drop in **later** as pure swaps behind the `BuildingDefs` / `ItemDefs` tables — the
+  simulation (HP, grid size, damage, income) never changes, only the visual.
+
+The item and part sets start **small and grow continuously** toward release (eventually hundreds of
+items). Because content is data (`src/shared/defs`), adding one is a one-file diff — dummy or modeled.
+
+## Phase 2 (post-traction): commission on the critical path, code the rest
 
 | Asset class | Source | Who |
 | ----------- | ------ | --- |

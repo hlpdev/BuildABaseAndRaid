@@ -4,6 +4,22 @@ Sequencing principle: the **core loop and its fairness rails ship together**, th
 foundation is laid early** (so the flea can be built safely later), and the **highest-risk system (the
 flea market) ships last** behind a proven-stable economy.
 
+## Cross-cutting (every milestone, not a phase)
+
+- **Mobile/console-first.** Every feature is built and tested thumb-on-glass and on gamepad from the
+  start — never "add touch later." See `docs/PLATFORMS_AND_INPUT.md`.
+- **Dummy models throughout.** All parts/items are colored primitives; real models swap in behind the
+  def tables post-traction. Nothing is art-blocked. See `docs/ASSET_PIPELINE.md`.
+- **Mild-9+ compliant content** from day one, even though we launch 16+/general (see below).
+
+## Launch phasing (traction-gated under-16 access)
+
+1. Launch **16+/general**, Mild-9+ compliant.
+2. Friend's ad spend → **500 highly-engaged age-verified players in 60 days**.
+3. Pass the 3-step Kids/Select review → **under-16 access unlocks**. Keep above the 100-active floor.
+
+Creator prerequisites handled before launch: account in good standing, ID/parent verification, 2FA.
+
 ## M0 — Foundations ✅ (in progress)
 
 - [x] Rokit toolchain, Rojo project files, Wally deps, StyLua/Selene/luau-lsp, CI
@@ -21,7 +37,9 @@ flea market) ships last** behind a proven-stable economy.
 - [ ] `BaseService`: buy parts, **grid-snap placement**, part cap, serialize/rebuild base, **support
       graph**
 - [ ] `VaultService`: store/withdraw, income accrual (online)
-- [ ] Vide UI: roll, inventory, vault, part shop, build mode
+- [ ] Vide UI: roll, inventory, vault, part shop, build mode — **touch + gamepad from the start**
+- [ ] `InputController` intent abstraction (touch / gamepad / KBM → one intent stream)
+- [ ] Build mode on touch/gamepad: placement ghost + grid snap + on-screen rotate/place/level
 - [ ] Juice pass #1: destruction bursts, roll animation, hit feedback, sound
 
 ## M2 — Raiding + fairness (must land together)
@@ -38,6 +56,7 @@ flea market) ships last** behind a proven-stable economy.
 
 ## M3 — Retention systems
 
+- [ ] **The Forge** (hub): combine N same-rarity items → 1 random next-rarity item (item sink + gamble)
 - [ ] Daily login streak → day-7 guaranteed high-rarity roll
 - [ ] Weekly leaderboards (value raided / traded) — MemoryStore, Monday reset
 - [ ] Rotating limited items (FOMO)
